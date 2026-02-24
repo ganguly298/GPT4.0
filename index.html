@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Click Quest - Cursor Game</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <h1 class="title">CLICK QUEST</h1>
+            <div class="stats">
+                <div class="stat">
+                    <span class="label">SCORE</span>
+                    <span class="value" id="score">0</span>
+                </div>
+                <div class="stat">
+                    <span class="label">COMBO</span>
+                    <span class="value" id="combo">0</span>
+                </div>
+                <div class="stat">
+                    <span class="label">BEST</span>
+                    <span class="value" id="best">0</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="game-board" id="gameBoard">
+            <!-- Targets will be generated here by JavaScript -->
+        </div>
+
+        <div class="footer">
+            <button class="reset-btn" onclick="resetGame()">NEW GAME</button>
+            <div class="info">Click on the glowing targets as fast as you can!</div>
+        </div>
+    </div>
+
+    <div class="particle-container" id="particleContainer"></div>
+
+    <script>
+        let score = 0;
+        let combo = 0;
+        let bestScore = localStorage.getItem('bestScore') || 0;
+        const gameBoard = document.getElementById('gameBoard');
+        const scoreDisplay = document.getElementById('score');
+        const comboDisplay = document.getElementById('combo');
+        const bestDisplay = document.getElementById('best');
+        const particleContainer = document.getElementById('particleContainer');
+
+        bestDisplay.textContent = bestScore;
+
+        function createTarget() {
+            const target = document.createElement('div');
+            target.className = 'target';
+            
+            // Random position
+            const x = Math.random() * (gameBoard.clientWidth - 60);
+            const y = Math.random() * (gameBoard.clientHeight - 60);
+            
+            target.style.left = x + 'px';
+            target.style.top = y + 'px';
+            
+            // Random color
+            const colors = ['#FF6B6B', '#4ECDC4', '#FFE66D', '#95E1D3', '#F38181', '#AA96DA'];
+            const randomColor = colors[Math.floor(Math.random() * colors.length)];
+            target.style.setProperty('--target-color', randomColor);
+            
+            target.onclick = (e) => {
+                e.stopPropagation();
+                clickTarget(target, x + 30, y + 30);
+            };
+            
+            gameBoard.appendChild(target);
+            
+            // Auto-remove after 3 seconds if not clicked
+            setTimeout(() => {
+                if (target.parentNode) {
+                    target.remove();
+                    combo = 0;
+                    updateCombo();
+                    createTarget();
+                }
+            }, 3000);
+        }
+
+        function clickTarget(target, x, y) {
+            score += combo + 1;
+            combo += 1;
+            
+            // Create particles
+            createParticles(x, y);
+            
+            // Update displays
+            updateScore();
+            updateCombo();
+            
+            // Remove target and create new one
+            target.classList.add('pop');
+            setTimeout(() => {
+                target.remove();
+                createTarget();
+            }, 100);
+        }
+
+        function createParticles(x, y) {
+            for (let i = 0; i < 8; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.textContent = '+' + (combo);
+                
+                const angle = (i / 8) * Math.PI * 2;
+                const velocity = 5 + Math.random() * 5;
+                
+                particle.style.left = x + 'px';
+                particle.style.top = y + 'px';
+                particle.style.setProperty('--vx', Math.cos(angle) * velocity);
+                particle.style.setProperty('--vy', Math.sin(angle) * velocity);
+                
+                particleContainer.appendChild(particle);
+                
+                setTimeout(() => particle.remove(), 800);
+            }
+        }
+
+        function updateScore() {
+            scoreDisplay.textContent = score;
+            if (score > bestScore) {
+                bestScore = score;
+                bestDisplay.textContent = bestScore;
+                localStorage.setItem('bestScore', bestScore);
+                bestDisplay.parentElement.classList.add('pulse');
+                setTimeout(() => bestDisplay.parentElement.classList.remove('pulse'), 500);
+            }
+        }
+
+        function updateCombo() {
+            comboDisplay.textContent = combo;
+            if (combo > 0) {
+                comboDisplay.parentElement.classList.add('combo-active');
+            } else {
+                comboDisplay.parentElement.classList.remove('combo-active');
+            }
+        }
+
+        function resetGame() {
+            score = 0;
+            combo = 0;
+            scoreDisplay.textContent = '0';
+            comboDisplay.textContent = '0';
+            gameBoard.innerHTML = '';
+            createTarget();
+        }
+
+        // Initialize game
+        createTarget();
+    </script>
+</body>
+</html>

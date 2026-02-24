@@ -1,0 +1,9 @@
+# Bicep parameter files with secrets
+parameters/*.bicepparam
+
+# Azure CLI cache
+.azure/
+
+# Environment files
+.env
+*.env.local
